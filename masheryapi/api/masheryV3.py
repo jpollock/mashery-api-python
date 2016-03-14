@@ -11,7 +11,7 @@ class MasheryV3:
 
     def authenticate_with_code(self, apikey, secret, code, area_uuid, redirect_uri):
         payload = {'grant_type': 'authorization_code', 'code' : code, 'redirect_uri': redirect_uri, 'scope' : area_uuid} 
-        response = requests.post(self.protocol + '://' + self.api_host + self.token_endpoint, auth=HTTPBasicAuth(apikey, secret), data=payload)
+        response = requests.post(self.protocol + '://' + self.api_host + self.token_endpoint, auth=HTTPBasicAuth(apikey, secret), data=payload, verify=False)
         if response.status_code == 200:
             return response.json()
         else:
@@ -19,7 +19,7 @@ class MasheryV3:
 
     def authenticate(self, apikey, secret, username, password, area_uuid):
         payload = {'grant_type': 'password', 'username' : username, 'password'  : password, 'scope' : area_uuid} 
-        response = requests.post(self.protocol + '://' + self.api_host + self.token_endpoint, auth=HTTPBasicAuth(apikey, secret), data=payload)
+        response = requests.post(self.protocol + '://' + self.api_host + self.token_endpoint, auth=HTTPBasicAuth(apikey, secret), data=payload, verify=False)
         if response.status_code == 200:
             return response.json()
         else:
@@ -27,20 +27,20 @@ class MasheryV3:
 
     def get(self, token, resource, params):
         headers = {"Content-type": "application/json", "Authorization": 'Bearer ' + token}
-        response = requests.get(self.protocol + '://' + self.api_host + self.resource_endpoint + resource + '?' + params, headers=headers)
+        response = requests.get(self.protocol + '://' + self.api_host + self.resource_endpoint + resource + '?' + params, headers=headers, verify=False)
         return response
 
     def put(self, token, resource, params, payload):
         headers = {"Content-type": "application/json", "Authorization": 'Bearer ' + token}
-        response = requests.put(self.protocol + '://' + self.api_host + self.resource_endpoint + resource + '?' + params, headers=headers, data=json.dumps(payload))
+        response = requests.put(self.protocol + '://' + self.api_host + self.resource_endpoint + resource + '?' + params, headers=headers, data=json.dumps(payload), verify=False)
         return response
 
     def post(self, token, resource, params, payload):
         headers = {"Content-type": "application/json", "Authorization": 'Bearer ' + token}
-        response = requests.post(self.protocol + '://' + self.api_host + self.resource_endpoint + resource + '?' + params, headers=headers, data=json.dumps(payload))
+        response = requests.post(self.protocol + '://' + self.api_host + self.resource_endpoint + resource + '?' + params, headers=headers, data=json.dumps(payload), verify=False)
         return response
 
     def delete(self, token, resource):
         headers = {"Content-type": "application/json", "Authorization": 'Bearer ' + token}
-        response = requests.delete(self.protocol + '://' + self.api_host + self.resource_endpoint + resource , headers=headers)
+        response = requests.delete(self.protocol + '://' + self.api_host + self.resource_endpoint + resource , headers=headers, verify=False)
         return response.status_code

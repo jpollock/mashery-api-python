@@ -1,3 +1,5 @@
+import json
+
 class Apis:
 
     def iodoc_from_swagger(self, public_domain, external_api_definition):
@@ -23,30 +25,52 @@ class Apis:
         return iodoc
 
 
+    def load_swagger_json(self, external_api_definition):
+        try:
+            external_api_definition_object = json.loads(external_api_definition)
+        except ValueError as err:
+            raise ValueError("External source is invalid JSON or invalid Swagger.") 
+
+        if 'info' not in external_api_definition_object:
+            raise ValueError("External source is invalid JSON or invalid Swagger.") 
+        return external_api_definition_object
+
     def from_swagger(self, public_domain, external_api_definition):
+        try:
+            external_api_definition_object = self.load_swagger_json(external_api_definition)
+        except ValueError as err:
+            return err
+
         api = {}
-        api['name'] = external_api_definition['info']['title']
-        api['version'] = external_api_definition['info']['version']
-        api['description'] = external_api_definition['info']['description']
+
+        api['name'] = external_api_definition_object['info']['title']
+        api['version'] = external_api_definition_object['info']['version']
+        api['description'] = external_api_definition_object['info']['description']
 
         api['endpoints'] = []
 
-        for path in external_api_definition['paths']:
+        for path in external_api_definition_object['paths']:
             endpoint = {}
             endpoint['name'] = path.replace('/', ' ').replace('{', ' ').replace('}', ' ').strip()
-            endpoint['requestPathAlias'] = external_api_definition['basePath'] + path
-            endpoint['targetRequestPath'] = external_api_definition['basePath'] + path
+            endpoint['requestPathAlias'] = external_api_definition_object['basePath'] + path
+            endpoint['targetRequestPath'] = external_api_definition_object['basePath'] + path
 
-            if external_api_definition['schemes'][0] == 'https':
+            if external_api_definition_object['schemes'][0] == 'https':
                 endpoint['inboundSslRequired'] = True
             else:
                 endpoint['inboundSslRequired'] = False
 
+            if 'securityDefinitions' in external_api_definition_object:
+                if 'api_key' in external_api_definition_object['securityDefinitions']:
+                    endpoint['requestAuthenticationType'] = 'api_key'
+                    endpoint['apiKeyValueLocationKey'] = external_api_definition_object['securityDefinitions']['api_key']['name']
+                    endpoint['apiKeyValueLocations'] = ['request-header']
+
             endpoint['publicDomains'] = [{'address': public_domain}]
-            endpoint['systemDomains'] = [{'address': external_api_definition['host']}]
+            endpoint['systemDomains'] = [{'address': external_api_definition_object['host']}]
 
             endpoint['supportedHttpMethods'] = []
-            for http_method in external_api_definition['paths'][path]:
+            for http_method in external_api_definition_object['paths'][path]:
                 endpoint['supportedHttpMethods'].append(http_method)
 
             api['endpoints'].append(endpoint)
